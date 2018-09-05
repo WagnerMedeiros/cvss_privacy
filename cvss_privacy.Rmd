@@ -1,0 +1,82 @@
+---
+title: "Quantifying Privacy Using CVSS"
+author: "Author"
+date: "September 04, 2018"
+output: html_document
+---
+
+```{r warning=FALSE, message=FALSE}
+library(tidyverse)
+library(anonymizer)
+library(knitr)
+library(here)
+library(readxl)
+library(reshape)
+```
+
+# Dataset
+```{r,message=FALSE, warning=FALSE}
+df<- read_excel("data/nvdcve.xlsx")
+```
+
+```{r}
+df <- df %>% 
+  drop_na()
+```
+
+```{r}
+head(df)
+```
+# Select features
+
+```{r}
+df2 <- df %>% 
+  subset(select = c("id", "score", "confidentiality-impact", "summary"))
+```
+```{r}
+head(df2)
+```
+
+```{r}
+df3 <- df2 %>%
+  filter(score >= 7)
+```
+
+```{r}
+df4 <- df2 %>%
+  filter(`confidentiality-impact` == "COMPLETE")
+```
+```{r}
+grep("user password", df$summary)
+```
+
+```{r}
+df %>%
+  ggplot( aes(y = score, x = `confidentiality-impact`)) + 
+  geom_jitter() 
+```
+
+```{r}
+df %>%
+  summary()
+```
+
+```{r}
+df %>%
+  ggplot( aes(x = score)) + 
+  geom_histogram(bins = 10)
+```
+
+```{r}
+df %>%
+  ggplot(aes(y = score, x = id)) + 
+  geom_jitter()
+```
+
+```{r}
+
+df %>% filter(str_detect(summary, 'as the root user'))
+#df[grep("as the root user",  df$summary),]
+#df[grep("execute arbitrary code",  df$summary),]  
+#df3[grep("user",  df3$summary),]
+```
