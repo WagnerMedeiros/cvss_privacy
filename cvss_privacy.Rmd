@@ -12,50 +12,70 @@ library(knitr)
 library(here)
 library(readxl)
 library(reshape)
+library(lubridate)
+library(httr)
 ```
 
 # Dataset
 ```{r,message=FALSE, warning=FALSE}
-df<- read_excel("data/nvdcve.xlsx")
+df_pe <- read_excel("data/privacy_expessions.xlsx")
+df <- read_excel("data/nvdcve.xlsx")
 ```
+
 
 ```{r}
 df <- df %>% 
   drop_na()
 ```
 
+
 ```{r}
 head(df)
 ```
+
+```{r}
+head(df_pe)
+```
+
+
 # Select features
 
 ```{r}
 df2 <- df %>% 
   subset(select = c("id", "score", "confidentiality-impact", "summary"))
+#  write_csv(cvss2, "../data/cvss2.csv")  
 ```
+
+
 ```{r}
 head(df2)
 ```
 
+
 ```{r}
 df3 <- df2 %>%
   filter(score >= 7)
+#  drop_na()
 ```
 
 ```{r}
 df4 <- df2 %>%
   filter(`confidentiality-impact` == "COMPLETE")
+
 ```
+
 ```{r}
-grep("user password", df$summary)
+grep("user password", df2$summary)
 ```
+
 
 ```{r}
 df %>%
+ # group_by(id) %>%
   ggplot( aes(y = score, x = `confidentiality-impact`)) + 
   geom_jitter() 
+ # geom_col()
 ```
-
 ```{r}
 df %>%
   summary()
@@ -63,20 +83,94 @@ df %>%
 
 ```{r}
 df %>%
+ # group_by(id) %>%
   ggplot( aes(x = score)) + 
   geom_histogram(bins = 10)
 ```
 
 ```{r}
 df %>%
+ # group_by(id) %>%
   ggplot(aes(y = score, x = id)) + 
+ # geom_point() +
   geom_jitter()
 ```
 
-```{r}
+#### Imprimir os CVEs que contêm os termos inseridos na tabela **privacy_expessions**
 
-df %>% filter(str_detect(summary, 'as the root user'))
-#df[grep("as the root user",  df$summary),]
-#df[grep("execute arbitrary code",  df$summary),]  
-#df3[grep("user",  df3$summary),]
+```{r}
+df_pe$description <- as.character(df_pe$description)
+i = 0
+vet = numeric(i)
+print(vet)
+#for (termo in as.character(df_pe$description)) {
+for (termo in c(df_pe$description)) {
+  i = i + 1
+  result <- df %>% filter(str_detect(summary, termo))
+  vet[i] <- df$id[i]
+  #result <- (df[grep(termo,  df$summary),])
+  ifelse (TRUE, priv_cve <- c(result$id), print("Não foram econtrados CVEs"))
+  print(paste(c(termo, ":" , priv_cve), collapse=" "))
+}
+
+```
+```{r}
+print(vet)
+#head(vet)
+#vet[15]
+```
+
+
+
+```{r}
+#df3 %>%
+  grep("CVE-2014-9750", df$id)
+```
+
+
+```{r}
+#result <- df %>% filter(str_detect(summary, "gain privileges"))
+result <- df[grep("gain privileges",  df$summary),]
+print(result)
+```
+
+
+
+# Fazendo merge dos data frames
+
+```{r}
+resultado <- Reduce(function(x,y) {merge(x,y)}, list(df3,df2))
+```
+
+
+# Selec features
+```{r}
+#cvss3 <- cvss %>%  select(feat1, feat2, featN)
+#write_csv(aluno_geral, "../data/cvss3.csv")
+#cvss3 <- read_csv(here::here("../data/cvss3"))
+```
+
+## Filter features
+```{r}
+#cvss4 <- cvss2 %>% filter(feat1 == '08')
+#write_csv(cvss4, "../data/cvss4.csv")
+#cvss4 <- read_csv(here::here("../data/cvss4.csv"))
+```
+
+
+# Fazendo merge dos data frames
+
+```{r}
+#resultado <- Reduce(function(x,y) {merge(x,y)}, list(cvss1,cvss2,cvssN))
+```
+
+
+## Visualizações
+
+
+### Exemplo
+```{r}
+df %>%
+  ggplot( aes(x = param1, y = param2)) + 
+  geom_point()
 ```
