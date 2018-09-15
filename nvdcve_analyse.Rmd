@@ -1,0 +1,90 @@
+---
+title: "Quantifying Privacy Using CVSS"
+author: "Author"
+date: "September 04, 2018"
+output: html_document
+---
+
+```{r warning=FALSE, message=FALSE}
+library(tidyverse)
+library(anonymizer)
+library(knitr)
+library(here)
+library(readxl)
+library(reshape)
+library(lubridate)
+library(httr)
+```
+
+# Dataset
+```{r,message=FALSE, warning=FALSE}
+df_pe <- read_excel("data/privacy_expessions.xlsx")
+df <- read_excel("data/nvdcve2.xlsx")
+```
+
+
+```{r}
+#df <- df %>% 
+#  drop_na()
+```
+
+
+```{r}
+head(df)
+```
+
+```{r}
+head(df_pe)
+```
+
+
+# Select features
+
+```{r}
+df2 <- df %>% 
+  subset(select = c("id", "ns4:score", "ns4:confidentiality-impact", "ns3:summary"))
+#    filter(`ns4:confidentiality-impact` !='NA' )
+#  write_csv(cvss2, "../data/cvss2.csv")  
+head(df2)
+```
+
+
+
+```{r}
+dfscore <- df %>% 
+  subset(select = c("id", "ns4:score", "ns4:confidentiality-impact")) %>%
+    filter(`ns4:confidentiality-impact` !='NA' )
+#write_csv(dfscore, "../data/dfscore.csv")  
+```
+
+
+```{r}
+dfsummary <- df %>% 
+  subset(select = c("id", "ns3:summary"))  %>%
+    filter(`ns3:summary` !='NA')
+#write_csv(dfsummary, "../data/dfsummary.csv")  
+```
+
+
+# Fazendo merge dos dataframes dfscore e dfsummary
+```{r}
+dfnvdcve <- Reduce(function(x,y) {merge(x,y)}, list(dfscore,dfsummary))
+write_csv(dfnvdcve, "data/df_nvdcve.csv")  
+```
+
+
+#### Imprimir os CVEs que contêm os termos inseridos na tabela **privacy_expessions**
+```{r}
+df_pe$description <- as.character(df_pe$description)
+i = 0
+vet = rep(i)
+#for (termo in as.character(df_pe$description)) {
+for (termo in c(df_pe$description)) {
+  i = i + 1
+  result <- dfnvdcve %>% filter(str_detect(`ns3:summary`, termo))
+  vet[i] <- dfnvdcve$id[i]
+  result <- (dfnvdcve[grep(termo,  dfnvdcve$`ns3:summary`),])
+  ifelse (TRUE, priv_cve <- c(result$id), print("Não foram econtrados CVEs"))
+  print(paste(c(termo, ":" , priv_cve), collapse=" "))
+}
+```
